@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>SentinelScan</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- ================= HEADER ================= -->
+
+    <div class="header">
+
+        <h1 class="logo">
+            🛡️ SentinelScan
+        </h1>
+
+        <h2>
+            Web Security Scanner
+        </h2>
+
+        <p>
+            Scan websites for common security misconfigurations
+            and security best practices.
+        </p>
+
+    </div>
+
+
+    <!-- ================= SCAN FORM ================= -->
+
+    <form action="/scan"
+          method="POST"
+          class="scan-form">
+
+        <input
+            type="text"
+            name="url"
+            placeholder="https://example.com"
+            required>
+
+        <button type="submit">
+            Scan
+        </button>
+
+    </form>
+
+
+    <!-- ================= RESULTS ================= -->
+
+    {% if result %}
+
+    <hr>
+
+
+    <div class="result-section">
+
+
+        <!-- SCAN RESULT -->
+
+        <h2 class="result-title">
+            Scan Result
+        </h2>
+
+
+        <p class="target">
+
+            <strong>Target:</strong>
+
+            {{ url }}
+
+        </p>
+
+
+        <!-- ================= SCORE + SSL ================= -->
+
+        <div class="top-cards">
+
+
+            <!-- SECURITY SCORE -->
+
+            <div class="score-card">
+
+                <h3>
+                    Overall Security Score
+                </h3>
+
+                <div class="score">
+
+                    {{ score }}/100
+
+                </div>
+
+            </div>
+
+
+            <!-- SSL -->
+
+            <div class="score-card ssl-card">
+
+                <h3>
+                    🔒 SSL Certificate
+                </h3>
+
+
+                {% if ssl_info.status == "Valid" %}
+
+                <p>
+
+                    <strong>Status:</strong>
+
+                    <span class="good">
+                        ✅ Valid
+                    </span>
+
+                </p>
+
+
+                <p>
+
+                    <strong>Issuer:</strong>
+
+                    {{ ssl_info.issuer }}
+
+                </p>
+
+
+                <p>
+
+                    <strong>Valid From:</strong>
+
+                    {{ ssl_info.valid_from }}
+
+                </p>
+
+
+                <p>
+
+                    <strong>Expires On:</strong>
+
+                    {{ ssl_info.valid_to }}
+
+                </p>
+
+
+                <p>
+
+                    <strong>Days Remaining:</strong>
+
+                    {{ ssl_info.days_remaining }}
+
+                </p>
+
+
+                {% else %}
+
+                <p class="bad">
+
+                    ❌ SSL Certificate Error
+
+                </p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= SECURITY HEADERS ================= -->
+
+        <h2 class="section-title">
+
+            Security Headers
+
+        </h2>
+
+
+        <div class="results">
+
+
+            {% for key, value in result.items() %}
+
+
+                {% if key in header_info %}
+
+
+                <div class="card">
+
+
+                    <h3>
+
+                        {{ header_info[key]["name"] }}
+
+                    </h3>
+
+
+                    {% if value %}
+
+
+                    <p class="good">
+
+                        ✅ Present
+
+                    </p>
+
+
+                    <p>
+
+                        <strong>
+                            Value:
+                        </strong>
+
+                        <br>
+
+                        <code>
+                            {{ value }}
+                        </code>
+
+                    </p>
+
+
+                    {% else %}
+
+
+                    <p class="bad">
+
+                        ❌ Missing
+
+                    </p>
+
+
+                    {% endif %}
+
+
+                    <p>
+
+                        <strong>
+                            Why it matters:
+                        </strong>
+
+                        <br>
+
+                        {{ header_info[key]["description"] }}
+
+                    </p>
+
+
+                    <p>
+
+                        <strong>
+                            Risk if missing:
+                        </strong>
+
+                        <br>
+
+                        {{ header_info[key]["risk"] }}
+
+                    </p>
+
+
+                </div>
+
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+        <!-- ================= COOKIES ================= -->
+
+        <h2 class="section-title">
+
+            🍪 Cookie Security
+
+        </h2>
+
+
+        {% if cookie_info %}
+
+
+        <div class="cookie-results">
+
+
+            {% for cookie in cookie_info %}
+
+
+            <div class="cookie-card">
+
+
+                <h3>
+
+                    🍪 {{ cookie.name }}
+
+                </h3>
+
+
+                <p>
+
+                    <strong>
+                        Domain:
+                    </strong>
+
+                    {{ cookie.domain }}
+
+                </p>
+
+
+                <p>
+
+                    <strong>
+                        Path:
+                    </strong>
+
+                    {{ cookie.path }}
+
+                </p>
+
+
+                <!-- SECURE -->
+
+                <p>
+
+                    <strong>
+                        Secure:
+                    </strong>
+
+
+                    {% if cookie.secure %}
+
+                    <span class="good">
+                        ✅ Yes
+                    </span>
+
+                    {% else %}
+
+                    <span class="bad">
+                        ❌ No
+                    </span>
+
+                    {% endif %}
+
+                </p>
+
+
+                <!-- HTTP ONLY -->
+
+                <p>
+
+                    <strong>
+                        HttpOnly:
+                    </strong>
+
+
+                    {% if cookie.httponly %}
+
+                    <span class="good">
+                        ✅ Yes
+                    </span>
+
+                    {% else %}
+
+                    <span class="bad">
+                        ❌ No
+                    </span>
+
+                    {% endif %}
+
+                </p>
+
+
+                <!-- SAME SITE -->
+
+                <p>
+
+                    <strong>
+                        SameSite:
+                    </strong>
+
+
+                    {% if cookie.samesite %}
+
+                    <span class="good">
+
+                        {{ cookie.samesite }}
+
+                    </span>
+
+                    {% else %}
+
+                    <span class="bad">
+
+                        ❌ Not Set
+
+                    </span>
+
+                    {% endif %}
+
+                </p>
+
+
+                <!-- SECURITY -->
+
+                <div class="cookie-security">
+
+                    <strong>
+                        Security:
+                    </strong>
+
+
+                    {% if cookie.security == "Good" %}
+
+                    <span class="cookie-good">
+
+                        🟢 Good
+
+                    </span>
+
+
+                    {% elif cookie.security == "Medium" %}
+
+                    <span class="cookie-medium">
+
+                        🟡 Medium
+
+                    </span>
+
+
+                    {% else %}
+
+                    <span class="cookie-weak">
+
+                        🔴 Weak
+
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- RECOMMENDATIONS -->
+
+                {% if cookie.recommendations %}
+
+
+                <div class="cookie-recommendations">
+
+                    <strong>
+                        Recommendations:
+                    </strong>
+
+
+                    <ul>
+
+
+                        {% for recommendation in cookie.recommendations %}
+
+                        <li>
+
+                            ⚠️ {{ recommendation }}
+
+                        </li>
+
+                        {% endfor %}
+
+
+                    </ul>
+
+                </div>
+
+
+                {% else %}
+
+
+                <p class="cookie-safe">
+
+                    ✅ No cookie security issues detected.
+
+                </p>
+
+
+                {% endif %}
+
+
+            </div>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+        {% else %}
+
+
+        <div class="no-cookies">
+
+            🍪 No cookies detected.
+
+        </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+    {% endif %}
+
+
+</div>
+
+
+</body>
+
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Scan Results</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+    <h1>🛡️ Scan Report</h1>
+
+
+    <h2>
+        {{ url }}
+    </h2>
+
+
+    <table>
+
+
+        <tr>
+
+            <th>
+                Header
+            </th>
+
+            <th>
+                Status
+            </th>
+
+        </tr>
+
+
+        {% for key, value in result.items() %}
+
+
+        <tr>
+
+
+            <td>
+                {{ key }}
+            </td>
+
+
+            <td>
+
+
+                {% if value %}
+
+                    ✅ Present
+
+                {% else %}
+
+                    ❌ Missing
+
+                {% endif %}
+
+
+            </td>
+
+
+        </tr>
+
+
+        {% endfor %}
+
+
+    </table>
+
+
+</div>
+
+</body>
+
+</html>
